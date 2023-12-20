@@ -57,6 +57,8 @@ class DoublyLinkedList {
     if (!element) return;
     if (element.prev) element.prev.next = element.next;
     if (element.next) element.next.prev = element.prev;
+    element.next = null
+    element.prev = null
   }
 
   display() {
