@@ -1,177 +1,149 @@
-const BalanceFactor = {
-    BALANCED: 3,
-    UNBALANCED_LEFT: 5,
-    UNBALANCED_RIGHT: 1,
-    SLIGHTLY_UNBALANCED_LEFT: 4,
-    SLIGHTLY_UNBALANCED_RIGHT: 2,
-};
-
 class Node {
-    constructor(data) {
-        this.height = 0
-        this.left = null
-        this.data = data
-        this.right = null
+    constructor(value) {
+        this.value = value;
+        this.height = 1;
+        this.left = null;
+        this.right = null;
     }
 }
 
-class AVL {
+class AVLTree {
     constructor() {
-        this.root = null
+        this.root = null;
     }
 
-    getNodeHeight(node) {
-        if (node == null) return -1
-        return Math.max(
-            this.getNodeHeight(node.left),
-            this.getNodeHeight(node.right)
-        ) + 1;
+    // Função para obter a altura de um nó
+    getHeight(node) {
+        if (node === null) {
+            return 0;
+        }
+        return node.height;
     }
 
-    rotationLL(node) {
-        const tmp = node.left;
-        node.left = tmp.right;
-        tmp.right = node;
-        return tmp;
-    }
-
-    rotationRR(node) {
-        const tmp = node.right;
-        node.right = tmp.left;
-        tmp.left = node;
-        return tmp;
-    }
-
-    rotationLR(node) {
-        node.left = this.rotationRR(node.left);
-        return this.rotationLL(node);
-    }
-
-    rotationRL(node) {
-        node.right = this.rotationLL(node.right);
-        return this.rotationRR(node);
-    }
-
+    // Função para calcular o fator de balanceamento de um nó
     getBalanceFactor(node) {
-        const heightDifference = this.getNodeHeight(node.left) -
-            this.getNodeHeight(node.right);
-        switch (heightDifference) {
-            case -2:
-                return BalanceFactor.UNBALANCED_RIGHT;
-            case -1:
-                return BalanceFactor.SLIGHTLY_UNBALANCED_RIGHT;
-            case 1:
-                return BalanceFactor.SLIGHTLY_UNBALANCED_LEFT;
-            case 2:
-                return BalanceFactor.UNBALANCED_LEFT;
-            default:
-                return BalanceFactor.BALANCED;
+        if (node === null) {
+            return 0;
+        }
+        return this.getHeight(node.left) - this.getHeight(node.right);
+    }
+
+    // Função para atualizar a altura de um nó
+    updateHeight(node) {
+        if (node !== null) {
+            node.height = 1 + Math.max(this.getHeight(node.left), this.getHeight(node.right));
         }
     }
 
-    insert(data) {
-        this.root = this.insertNode(this.root, data);
+    // Função para realizar uma rotação simples à direita
+    rotateRight(y) {
+        const x = y.left;
+        const T2 = x.right;
+
+        // Realiza a rotação
+        x.right = y;
+        y.left = T2;
+
+        // Atualiza as alturas
+        this.updateHeight(y);
+        this.updateHeight(x);
+
+        return x;
     }
 
-    insertNode(node, data) {
+    // Função para realizar uma rotação simples à esquerda
+    rotateLeft(x) {
+        const y = x.right;
+        const T2 = y.left;
 
-        if (node == null) return new Node(data);
-        else if (data < node.data) {
-            node.left = this.insertNode(node.left, data);
-        } else if (data > node.data) {
-            node.right = this.insertNode(node.right, data);
-        } else return node;
+        // Realiza a rotação
+        y.left = x;
+        x.right = T2;
 
-        const balanceFactor = this.getBalanceFactor(node);
+        // Atualiza as alturas
+        this.updateHeight(x);
+        this.updateHeight(y);
 
-        if (balanceFactor === BalanceFactor.UNBALANCED_LEFT) {
-            if (data < node.left.data) {
-                node = this.rotationLL(node);
-            } else return this.rotationLR(node);
-        }
-
-        if (balanceFactor === BalanceFactor.UNBALANCED_RIGHT) {
-            if (data > node.right.data) {
-                node = this.rotationRR(node);
-            } else return this.rotationRL(node);
-        }
-
-        return node;
+        return y;
     }
 
-    removeNode(node, data) {
-        node = this.normalRemoveNode(node, data);
-        if (node == null) return node;
-
-        const balanceFactor = this.getBalanceFactor(node);
-
-        if (balanceFactor === BalanceFactor.UNBALANCED_LEFT) {
-            const balanceFactorLeft = this.getBalanceFactor(node.left);
-            if (
-                balanceFactorLeft === BalanceFactor.BALANCED ||
-                balanceFactorLeft === BalanceFactor.SLIGHTLY_UNBALANCED_LEFT
-            ) {
-                return this.rotationLL(node);
-            }
-            if (
-                balanceFactorLeft === BalanceFactor.SLIGHTLY_UNBALANCED_RIGHT
-            ) {
-                return this.rotationLR(node.left);
-            }
+    // Função para inserir um valor na árvore AVL
+    insert(root, value) {
+        if (root === null) {
+            return new Node(value);
         }
 
-        if (balanceFactor === BalanceFactor.UNBALANCED_RIGHT) {
-            const balanceFactorRight = this.getBalanceFactor(node.right);
-            if (
-                balanceFactorRight === BalanceFactor.BALANCED ||
-                balanceFactorRight === BalanceFactor.SLIGHTLY_UNBALANCED_RIGHT
-            ) {
-                return this.rotationRR(node);
-            }
-            if (
-                balanceFactorRight === BalanceFactor.SLIGHTLY_UNBALANCED_LEFT
-            ) {
-                return this.rotationRL(node.right);
-            }
-        }
-
-        return node;
-    }
-
-    normalRemoveNode(node, data) {
-        if (node == null) return null;
-
-        if (data < node.data) {
-            node.left = this.normalRemoveNode(node.left, data);
-            return node;
-        } else if (data > node.data) {
-            node.right = this.normalRemoveNode(node.right, data);
-            return node;
+        // Insere o valor na subárvore apropriada
+        if (value < root.value) {
+            root.left = this.insert(root.left, value);
+        } else if (value > root.value) {
+            root.right = this.insert(root.right, value);
         } else {
-            if (node.left == null && node.right == null) {
-                node = null;
-                return node;
-            }
-            if (node.left == null) {
-                node = node.right;
-                return node;
-            } else if (node.right == null) {
-                node = node.left;
-                return node;
-            }
-            const aux = this.minNode(node.right);
-            node.key = aux.key;
-            node.right = this.normalRemoveNode(node.right, aux.key);
-            return node;
+            // Ignora valores duplicados
+            return root;
         }
+
+        // Atualiza a altura do nó atual
+        this.updateHeight(root);
+
+        // Calcula o fator de balanceamento
+        const balance = this.getBalanceFactor(root);
+
+        // Realiza as rotações necessárias para manter o balanceamento
+        // À direita-direita
+        if (balance > 1 && value < root.left.value) {
+            return this.rotateRight(root);
+        }
+
+        // À esquerda-esquerda
+        if (balance < -1 && value > root.right.value) {
+            return this.rotateLeft(root);
+        }
+
+        // À esquerda-direita
+        if (balance > 1 && value > root.left.value) {
+            root.left = this.rotateLeft(root.left);
+            return this.rotateRight(root);
+        }
+
+        // À direita-esquerda
+        if (balance < -1 && value < root.right.value) {
+            root.right = this.rotateRight(root.right);
+            return this.rotateLeft(root);
+        }
+
+        // Nenhum balanceamento é necessário
+        return root;
     }
 
-    minNode(node) {
-        let current = node;
-        while (current != null && current.left != null) {
-            current = current.left;
-        }
-        return current;
+    // Função de interface para inserção
+    insertValue(value) {
+        this.root = this.insert(this.root, value);
     }
 
+    // Função para percorrer a árvore em ordem
+    inOrderTraversal(root, result = []) {
+        if (root !== null) {
+            this.inOrderTraversal(root.left, result);
+            result.push(root.value);
+            this.inOrderTraversal(root.right, result);
+        }
+        return result;
+    }
+
+    // Função de interface para percorrer a árvore em ordem
+    inOrder() {
+        return this.inOrderTraversal(this.root);
+    }
 }
+
+// Exemplo de uso da árvore AVL
+const avlTree = new AVLTree();
+
+avlTree.insertValue(10);
+avlTree.insertValue(20);
+avlTree.insertValue(30);
+avlTree.insertValue(40);
+avlTree.insertValue(50);
+
+console.log("Árvore AVL em ordem:", avlTree.inOrder());
