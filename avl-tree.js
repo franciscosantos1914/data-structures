@@ -1,9 +1,9 @@
 class Node {
     constructor(value) {
-        this.value = value;
         this.height = 1;
         this.left = null;
         this.right = null;
+        this.value = value;
     }
 }
 
